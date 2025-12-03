@@ -58,3 +58,77 @@ lora_config = LoraConfig(
 )
 model = get_peft_model(model, lora_config)
 model.print_trainable_parameters()
+
+# 5) Prepare a minimal instruction dataset.
+# If you don't have train.jsonl yet, the script will create a tiny example file.
+if not os.path.exists(TRAIN_JSONL):
+    sample_lines = [
+        {"instruction": "Explain what AI is in one sentence.", "response": "AI stands for artificial intelligence and means machines performing tasks that typically require human intelligence."},
+        {"instruction": "Write two simple login test cases.", "response": "1) Valid login: user enters correct username/password -> success. 2) Invalid login: wrong password -> error message displayed."},
+        {"instruction": "Summarize: 'ETL process' in one line", "response": "ETL extracts, transforms, and loads data from sources into a target data store."}
+    ]
+    with open(TRAIN_JSONL, "w", encoding="utf-8") as fh:
+        for r in sample_lines:
+            fh.write((__import__("json").dumps(r) + "\n"))
+    print(f"Created sample dataset at {TRAIN_JSONL}")
+
+# 6) Load dataset and tokenize
+print("Loading dataset and tokenizing...")
+
+def build_prompt(example):
+    # Common instruction tuning prompt template; adjust to your preference
+    instr = example["instruction"]
+    resp = example.get("response", "")
+    return f"### Instruction:\n{instr}\n\n### Response:\n{resp}"
+
+def tokenize_function(examples):
+    texts = [build_prompt(x) for x in examples["instruction"]]
+    out = tokenizer(
+        texts,
+        truncation=True,
+        padding="max_length",
+        max_length=MAX_LENGTH
+    )
+    # For causal LM training we want labels = input_ids
+    out["labels"] = out["input_ids"].copy()
+    return out
+
+ds = load_dataset("json", data_files=TRAIN_JSONL)
+# dataset has a column 'instruction' and 'response' since we used that structure above
+tokenized = ds.map(tokenize_function, batched=True, remove_columns=ds["train"].column_names)
+
+# 7) Training arguments
+print("Preparing training arguments...")
+training_args = TrainingArguments(
+    output_dir=OUTPUT_DIR,
+    per_device_train_batch_size=BATCH_SIZE,
+    gradient_accumulation_steps=GRAD_ACCUM,
+    num_train_epochs=EPOCHS,
+    learning_rate=LEARNING_RATE,
+    fp16=True,                          # keep model compute in fp16 where possible
+    logging_steps=10,
+    optim="adamw_torch",
+    save_strategy="no",                 # we only save adapters at the end
+    report_to=[]                        # disable wandb/other logging unless configured
+)
+
+# Data collator (handles padding & returns tensors)
+data_collator = default_data_collator
+
+# 8) Trainer and train
+print("Creating Trainer and starting training...")
+trainer = Trainer(
+    model=model,
+    args=training_args,
+    train_dataset=tokenized["train"],
+    data_collator=data_collator,
+    tokenizer=tokenizer
+)
+
+trainer.train()
+
+# 9) Save only the LoRA adapters (small)
+print(f"Saving PEFT adapter to {OUTPUT_DIR} ...")
+model.save_pretrained(OUTPUT_DIR)
+
+print("Done. Adapter saved. To run inference, load base model + adapter via peft.")
