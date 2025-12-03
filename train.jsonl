@@ -1,0 +1,3 @@
+{"instruction": "Explain what AI is in one sentence.", "response": "AI stands for artificial intelligence and means machines performing tasks that typically require human intelligence."}
+{"instruction": "Write two simple login test cases.", "response": "1) Valid login: user enters correct username/password -> success. 2) Invalid login: wrong password -> error message displayed."}
+{"instruction": "Summarize: 'ETL process' in one line", "response": "ETL extracts, transforms, and loads data from sources into a target data store."}
