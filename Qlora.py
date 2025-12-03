@@ -57,4 +57,4 @@ lora_config = LoraConfig(
     task_type="CAUSAL_LM"
 )
 model = get_peft_model(model, lora_config)
-model.print_trainable_parameters() 
+model.print_trainable_parameters()
