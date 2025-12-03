@@ -47,3 +47,14 @@ model = AutoModelForCausalLM.from_pretrained(
         device_map="auto",  # automatically places layers on available devices
         trust_remote_code=True  # some Gemma variants require this; safe if model from trusted source
  )
+print("Applying LoRA adapters...")
+lora_config = LoraConfig(
+    r=32,                         # rank: modest by default for 1B
+    lora_alpha=16,                # scaling factor
+    target_modules=["q_proj","k_proj","v_proj","o_proj"],  # common LLM proj names
+    lora_dropout=0.05,
+    bias="none",
+    task_type="CAUSAL_LM"
+)
+model = get_peft_model(model, lora_config)
+model.print_trainable_parameters() 
