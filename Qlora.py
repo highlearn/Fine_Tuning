@@ -82,16 +82,19 @@ def build_prompt(example):
     return f"### Instruction:\n{instr}\n\n### Response:\n{resp}"
 
 def tokenize_function(examples):
-    texts = [build_prompt(x) for x in examples["instruction"]]
+    texts = [build_prompt({"instruction": i, "response": r})
+             for i, r in zip(examples["instruction"], examples["response"])]
+
     out = tokenizer(
         texts,
         truncation=True,
         padding="max_length",
         max_length=MAX_LENGTH
     )
-    # For causal LM training we want labels = input_ids
+
     out["labels"] = out["input_ids"].copy()
     return out
+
 
 ds = load_dataset("json", data_files=TRAIN_JSONL)
 # dataset has a column 'instruction' and 'response' since we used that structure above
