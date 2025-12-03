@@ -51,5 +51,6 @@ trainer = Trainer(
 )
 
 trainer.train()
-
+trainer.save_model("C:/My_Docs/Python AI/Fine_Tuning/lora-distilbert")
 print("Training complete!")
+#saved
