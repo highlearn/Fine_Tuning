@@ -1,6 +1,6 @@
 from transformers import AutoTokenizer
 
-tokenizer = AutoTokenizer.from_pretrained("google/gemma-2-2b")
+tokenizer = AutoTokenizer.from_pretrained("C:\\My_Docs\\Python AI\\gemma-3-1b-it")
 
 text = "I am learning LLM fine-tuning."
 
