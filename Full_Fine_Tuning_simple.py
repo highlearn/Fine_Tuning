@@ -1,4 +1,5 @@
-from transformers import GPT2LMHeadModel, GPT2Tokenizer, Trainer, TrainingArguments
+from transformers import GPT2LMHeadModel, GPT2Tokenizer, TrainingArguments
+from transformers.trainer import Trainer
 from datasets import load_dataset
 
 model = GPT2LMHeadModel.from_pretrained("gpt2")
@@ -12,7 +13,7 @@ def tokenize(d):
 train_data = dataset["train"].map(tokenize)
 
 training_args = TrainingArguments(
-    output_dir="ft-gpt2-shakespeare",
+    output_dir="C:\\My_Docs\\Python AI\\Fine_Tuning\\ft-gpt2-shakespeare",
     per_device_train_batch_size=1,
     num_train_epochs=1,
     learning_rate=3e-5,
